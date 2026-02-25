@@ -1,0 +1,101 @@
+/* =========================
+   EKKORA • Components (Clean)
+   ========================= */
+
+.card{
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow-md);
+}
+
+.btn{
+  appearance:none;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  padding: 12px 14px;
+  border-radius: 14px;
+  cursor:pointer;
+  font-weight: 700;
+  letter-spacing: .2px;
+  transition: transform .14s ease, border-color .14s ease, background .14s ease, box-shadow .14s ease;
+}
+.btn:hover{
+  transform: translateY(-1px);
+  background: var(--panel-2);
+  border-color: color-mix(in oklab, var(--brand) 20%, var(--border));
+  box-shadow: var(--shadow-lg);
+}
+.btn:active{ transform: translateY(0); }
+
+.btn--full{ width:100%; }
+
+.btn--primary{
+  background: linear-gradient(135deg, var(--brand), var(--brand-2));
+  border-color: color-mix(in oklab, var(--brand) 26%, var(--border));
+  color: #06110a;
+  box-shadow: 0 10px 26px rgba(34,197,94,.18); /* glow bem discreto */
+}
+[data-theme="light"] .btn--primary{ color:#06210f; }
+
+.btn--ghost{ background: transparent; }
+.btn--danger{
+  background: color-mix(in oklab, var(--danger) 14%, var(--panel));
+  border-color: color-mix(in oklab, var(--danger) 30%, var(--border));
+}
+
+.field{ display:flex; flex-direction:column; gap:8px; }
+.label{ font-size:.92rem; color: var(--muted); }
+
+.input{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  outline:none;
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
+}
+.input:focus{
+  border-color: color-mix(in oklab, var(--brand) 35%, var(--border));
+  box-shadow: 0 0 0 5px color-mix(in oklab, var(--brand) 12%, transparent);
+  background: var(--panel-2);
+}
+
+.divider{
+  height:1px;
+  background: color-mix(in oklab, var(--border) 80%, transparent);
+  margin: 14px 0;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  font-size: .9rem;
+  color: var(--muted);
+}
+
+/* Toggle */
+.themeToggle{
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor:pointer;
+  font-size:.9rem;
+  transition:.15s ease;
+}
+
+.themeToggle:hover{
+  color: var(--text);
+  border-color: color-mix(in oklab, var(--brand) 25%, var(--border));
+  background: var(--panel-2);
+}

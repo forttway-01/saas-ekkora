@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="pt-br" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ekkora • Membros</title>
+  <link rel="stylesheet" href="./css/app.css" />
+  <link rel="icon" href="./favicon.png" type="image/x-icon">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand side-brand">
+        <div class="logoMark">E</div>
+        <div class="brandText">
+          <h1>Ekkora</h1>
+          <p id="churchLabel" class="muted">Carregando…</p>
+        </div>
+      </div>
+
+     <nav class="nav">
+  <a class="nav-item" href="./dashboard.html">Dashboard</a>
+  <a class="nav-item" href="./finance.html">Finanças</a>
+  <a class="nav-item" href="./members.html">Membros</a>
+  <a class="nav-item" href="./report.html">Relatórios</a>
+  <a class="nav-item" href="./onboard.html">Onboarding</a>
+</nav>
+
+      <div class="side-bottom">
+        <button id="btnTheme" class="btn btn-ghost">🌗 Alternar tema</button>
+        <button id="btnLogout" class="btn btn-danger">Sair</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h2>Membros</h2>
+          <p class="muted">Admin / Tesoureiro / Leitor</p>
+        </div>
+
+        <div class="top-actions">
+          <button id="btnOpenInvite" class="btn btn-primary">+ Convidar</button>
+        </div>
+      </header>
+
+      <section class="grid" style="grid-template-columns: 1.2fr .8fr;">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Lista de membros</div>
+              <div class="muted">Atualiza em tempo real</div>
+            </div>
+          </div>
+
+          <div class="table">
+            <div class="row head" style="grid-template-columns: 1fr 220px 140px 140px;">
+              <div>Membro</div><div>Email</div><div>Cargo</div><div class="right">Ações</div>
+            </div>
+            <div id="memberRows">
+              <div class="row" style="grid-template-columns: 1fr 220px 140px 140px;">
+                <div>—</div><div>—</div><div>—</div><div class="right">—</div>
+              </div>
+            </div>
+          </div>
+
+          <p class="hint">Esta tela está pronta; quando você pedir, eu te mando o <b>members.js completo</b> com convites e permissões.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Cargos</div>
+              <div class="muted">O que cada um pode fazer</div>
+            </div>
+          </div>
+
+          <div class="table">
+            <div class="row" style="grid-template-columns: 140px 1fr;">
+              <div><span class="badge income">Admin</span></div>
+              <div>Gerencia membros, metas e finanças.</div>
+            </div>
+            <div class="row" style="grid-template-columns: 140px 1fr;">
+              <div><span class="badge income">Tesoureiro</span></div>
+              <div>Cria/edita/exclui lançamentos e vê relatórios.</div>
+            </div>
+            <div class="row" style="grid-template-columns: 140px 1fr;">
+              <div><span class="badge expense">Leitor</span></div>
+              <div>Só visualiza dashboard e relatórios.</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <p class="hint">Quando ativarmos permissões, “Leitor” não verá botões de criar/editar.</p>
+        </div>
+      </section>
+
+      <!-- MODAL INVITE (só UI por enquanto) -->
+      <div id="modalInvite" class="modal hidden" role="dialog" aria-modal="true">
+        <div class="modal-card">
+          <div class="modal-head">
+            <div class="modal-title">Convidar membro</div>
+            <button id="closeInvite" class="icon-btn" aria-label="Fechar">✕</button>
+          </div>
+
+          <form id="formInvite" class="form is-visible">
+            <label class="field">
+              <span>Email do convidado</span>
+              <input id="inviteEmail" class="input" type="email" placeholder="ex: tesoureiro@igreja.com" required />
+            </label>
+
+            <label class="field">
+              <span>Cargo</span>
+              <select id="inviteRole" class="input" required>
+                <option value="admin">Admin</option>
+                <option value="treasurer" selected>Tesoureiro</option>
+                <option value="viewer">Leitor</option>
+              </select>
+            </label>
+
+            <div class="modal-actions">
+              <button class="btn btn-primary" type="submit">Enviar convite</button>
+              <button id="cancelInvite" class="btn btn-ghost" type="button">Cancelar</button>
+            </div>
+
+            <p class="hint">Lógica real entra no <b>members.js</b> (vou te mandar quando você pedir).</p>
+          </form>
+        </div>
+      </div>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initThemeToggle } from "./js/ui.js";
+    import { auth } from "./js/firebase.js";
+    import { signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+
+    initThemeToggle("btnTheme");
+
+    // Logout simples (igual nas outras páginas)
+    document.getElementById("btnLogout")?.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = "./index.html";
+    });
+
+    // Modal UI
+    const modal = document.getElementById("modalInvite");
+    const open = () => modal.classList.remove("hidden");
+    const close = () => modal.classList.add("hidden");
+
+    document.getElementById("btnOpenInvite")?.addEventListener("click", open);
+    document.getElementById("closeInvite")?.addEventListener("click", close);
+    document.getElementById("cancelInvite")?.addEventListener("click", close);
+    modal?.addEventListener("click", (e) => { if (e.target?.id === "modalInvite") close(); });
+
+    // Bloqueia submit por enquanto (só pra não recarregar)
+    document.getElementById("formInvite")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert("Convite (UI) pronto. Quando você pedir, eu ativo o members.js com Firestore + permissões.");
+    });
+  </script>
+</body>
+</html>

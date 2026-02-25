@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-br" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ekkora • Login</title>
+
+  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body class="auth-body">
+
+  <div class="auth-container">
+
+    <!-- LOGO CENTRAL -->
+    <div class="auth-logo">
+      <img src="./logo.png" alt="Ekkora Logo">
+    </div>
+
+    <!-- CARD -->
+    <div class="auth-card-premium">
+
+      <h2>Bem-vindo ao Ekkora</h2>
+      <p class="auth-subtitle">Gestão financeira inteligente para igrejas</p>
+
+      <div class="tabs">
+        <button class="tab is-active" data-tab="login">Entrar</button>
+        <button class="tab" data-tab="register">Criar conta</button>
+      </div>
+
+      <!-- LOGIN -->
+      <form id="formLogin" class="form is-visible" data-pane="login">
+        <input id="loginEmail" type="email" placeholder="Email" required />
+        <input id="loginPass" type="password" placeholder="Senha" required />
+        <button class="btn btn-premium" type="submit">Entrar</button>
+      </form>
+
+      <!-- REGISTER -->
+      <form id="formRegister" class="form" data-pane="register">
+        <input id="regName" type="text" placeholder="Nome" required />
+        <input id="regEmail" type="email" placeholder="Email" required />
+        <input id="regPass" type="password" placeholder="Senha" required />
+        <button class="btn btn-premium" type="submit">Criar conta</button>
+      </form>
+
+      <div id="toast" class="toast"></div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/auth.js"></script>
+</body>
+</html>

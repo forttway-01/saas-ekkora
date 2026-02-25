@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-br" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ekkora • Onboarding</title>
+  <link rel="stylesheet" href="./css/app.css" />
+  <link rel="icon" href="./favicon.png" type="image/x-icon">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand side-brand">
+        <div class="logoMark">E</div>
+        <div class="brandText">
+          <h1>Ekkora</h1>
+          <p class="muted">Onboarding</p>
+        </div>
+      </div>
+
+     <nav class="nav">
+  <a class="nav-item" href="./dashboard.html">Dashboard</a>
+  <a class="nav-item" href="./finance.html">Finanças</a>
+  <a class="nav-item" href="./members.html">Membros</a>
+  <a class="nav-item" href="./report.html">Relatórios</a>
+  <a class="nav-item" href="./onboard.html">Onboarding</a>
+</nav>
+
+      <div class="side-bottom">
+        <button id="btnTheme" class="btn btn-ghost">🌗 Alternar tema</button>
+        <button id="btnLogout" class="btn btn-danger">Sair</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h2>Onboarding</h2>
+          <p class="muted">Configurações iniciais da igreja</p>
+        </div>
+      </header>
+
+      <section class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Criar / Ajustar Igreja</div>
+              <div class="muted">Nome e informações básicas</div>
+            </div>
+          </div>
+
+          <form id="formOnboard" class="form is-visible">
+            <label class="field">
+              <span>Nome da Igreja</span>
+              <input id="churchName" class="input" type="text" placeholder="Ex: Igreja Vida Nova" required />
+            </label>
+
+            <label class="field">
+              <span>Cidade (opcional)</span>
+              <input id="churchCity" class="input" type="text" placeholder="Ex: Campina Grande" />
+            </label>
+
+            <label class="field">
+              <span>Estado (opcional)</span>
+              <input id="churchState" class="input" type="text" placeholder="Ex: PB" />
+            </label>
+
+            <button class="btn btn-primary" type="submit">Salvar</button>
+            <p class="hint">Depois a gente amarra isso com multiusuários e permissões.</p>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Preferências</div>
+              <div class="muted">Meta mensal e formatações</div>
+            </div>
+          </div>
+
+          <form id="formPrefs" class="form is-visible">
+            <label class="field">
+              <span>Meta mensal de entradas (R$)</span>
+              <input id="monthlyTarget" class="input" type="number" min="0" step="0.01" placeholder="Ex: 15000" />
+            </label>
+
+            <label class="field">
+              <span>Moeda</span>
+              <select id="currency" class="input">
+                <option value="BRL" selected>BRL (R$)</option>
+              </select>
+            </label>
+
+            <button class="btn btn-primary" type="submit">Salvar preferências</button>
+            <p class="hint">A moeda fica fixa em BRL no MVP (depois abrimos).</p>
+          </form>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initThemeToggle } from "./js/ui.js";
+    initThemeToggle("btnTheme");
+  </script>
+
+  <!-- JS da página (vamos criar quando você pedir) -->
+  <script type="module" src="./js/pages/onboard.js"></script>
+</body>
+</html>

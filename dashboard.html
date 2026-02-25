@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-br" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ekkora • Dashboard</title>
+  <link rel="stylesheet" href="./css/app.css" />
+<link rel="icon" href="./favicon.png" type="image/x-icon">
+  <link rel="stylesheet" href="./css/app.css" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand side-brand">
+        <div class="logoMark">E</div>
+        <div class="brandText">
+          <h1>Ekkora</h1>
+          <p id="churchLabel" class="muted">Carregando…</p>
+        </div>
+      </div>
+
+   <nav class="nav">
+  <a class="nav-item" href="./dashboard.html">Dashboard</a>
+  <a class="nav-item" href="./finance.html">Finanças</a>
+  <a class="nav-item" href="./members.html">Membros</a>
+  <a class="nav-item" href="./report.html">Relatórios</a>
+  <a class="nav-item" href="./onboard.html">Onboarding</a>
+</nav>
+      <div class="side-bottom">
+        <button id="btnTheme" class="btn btn-ghost">🌗 Alternar tema</button>
+        <button id="btnLogout" class="btn btn-danger">Sair</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h2>Visão geral</h2>
+          <p class="muted">Tudo em tempo real</p>
+        </div>
+        <div class="top-actions">
+          <a class="btn btn-primary" href="./finance.html">+ Nova movimentação</a>
+        </div>
+      </header>
+
+      <section class="grid kpis">
+        <div class="card">
+          <div class="card-label">Entradas (mês)</div>
+          <div id="kpiIncome" class="kpi">R$ 0,00</div>
+          <div id="kpiIncomeSub" class="sub muted">0 lançamentos</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Saídas (mês)</div>
+          <div id="kpiExpense" class="kpi">R$ 0,00</div>
+          <div id="kpiExpenseSub" class="sub muted">0 lançamentos</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Saldo acumulado (mês)</div>
+          <div id="kpiBalance" class="kpi">R$ 0,00</div>
+          <div id="kpiBalanceSub" class="sub muted">—</div>
+        </div>
+        <div class="card">
+          <div class="card-label">Média 7 dias</div>
+          <div id="kpiAvg7" class="kpi">R$ 0,00</div>
+          <div id="kpiAvg7Sub" class="sub muted">Entradas - Saídas</div>
+        </div>
+      </section>
+
+      <section class="grid charts">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Movimentação do mês</div>
+              <div class="muted">Entradas, Saídas e Saldo acumulado</div>
+            </div>
+
+            <div class="meta-target">
+              <div class="muted">Meta mensal</div>
+              <input id="monthlyTarget" class="input small" type="number" min="0" step="0.01" placeholder="Ex: 15000" />
+              <button id="saveTarget" class="btn btn-ghost small">Salvar</button>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="lineChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Categorias</div>
+              <div class="muted">Distribuição por categoria (mês)</div>
+            </div>
+          </div>
+
+          <div class="chart-wrap">
+            <canvas id="pieChart" height="220"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Últimos lançamentos</div>
+            <div class="muted">Atualiza sozinho</div>
+          </div>
+        </div>
+
+        <div class="table">
+          <div class="row head">
+            <div>Data</div><div>Tipo</div><div>Categoria</div><div>Descrição</div><div class="right">Valor</div>
+          </div>
+          <div id="lastRows"></div>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <script type="module" src="./js/pages/dashboard.js"></script>
+</body>
+</html>

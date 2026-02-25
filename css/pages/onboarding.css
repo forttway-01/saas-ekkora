@@ -1,0 +1,81 @@
+/* =========================
+   [ONBOARDING] - Page Only
+   ========================= */
+
+.obSection{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.obTitle{
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: .2px;
+  margin: 0;
+}
+
+.obForm{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.obHint{
+  margin: 0;
+  font-size: .92rem;
+  opacity: .75;
+}
+
+.obRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.obList{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.obEmpty{
+  padding: 12px 12px;
+  border: 1px dashed var(--border, rgba(255,255,255,.15));
+  border-radius: 14px;
+  opacity: .75;
+}
+
+/* Card clicável para igreja */
+.obChurchBtn{
+  text-align:left;
+  border: 1px solid var(--border, rgba(255,255,255,.12));
+  background: color-mix(in oklab, var(--panel, rgba(255,255,255,.06)) 92%, transparent);
+  border-radius: 16px;
+  padding: 12px 12px;
+  cursor: pointer;
+  transition: transform .12s ease, border-color .12s ease, background .12s ease;
+}
+
+.obChurchBtn:hover{
+  transform: translateY(-1px);
+  border-color: color-mix(in oklab, var(--accent, #22c55e) 35%, var(--border, rgba(255,255,255,.12)));
+}
+
+.obChurchName{
+  font-weight: 800;
+  margin: 0 0 4px 0;
+}
+
+.obChurchMeta{
+  margin: 0;
+  font-size: .92rem;
+  opacity: .75;
+}
+
+.obFooter{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}

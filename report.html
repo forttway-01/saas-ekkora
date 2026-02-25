@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-br" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ekkora • Relatórios</title>
+  <link rel="stylesheet" href="./css/app.css" />
+  <link rel="icon" href="./favicon.png" type="image/x-icon">
+
+  <!-- Chart.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand side-brand">
+        <div class="logoMark">E</div>
+        <div class="brandText">
+          <h1>Ekkora</h1>
+          <p id="churchLabel" class="muted">Carregando…</p>
+        </div>
+      </div>
+
+      <nav class="nav">
+  <a class="nav-item" href="./dashboard.html">Dashboard</a>
+  <a class="nav-item" href="./finance.html">Finanças</a>
+  <a class="nav-item" href="./members.html">Membros</a>
+  <a class="nav-item" href="./report.html">Relatórios</a>
+  <a class="nav-item" href="./onboard.html">Onboarding</a>
+</nav>
+
+      <div class="side-bottom">
+        <button id="btnTheme" class="btn btn-ghost">🌗 Alternar tema</button>
+        <button id="btnLogout" class="btn btn-danger">Sair</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <h2>Relatórios</h2>
+          <p class="muted">Fechamento mensal e exportação</p>
+        </div>
+
+        <div class="top-actions">
+          <button id="btnPrint" class="btn btn-ghost">🖨️ Imprimir</button>
+          <button id="btnExport" class="btn btn-primary">📄 Exportar (PDF)</button>
+        </div>
+      </header>
+
+      <section class="grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Período</div>
+              <div class="muted">Escolha o mês do relatório</div>
+            </div>
+          </div>
+
+          <form id="formPeriod" class="form is-visible">
+            <label class="field">
+              <span>Mês</span>
+              <input id="month" class="input" type="month" required />
+            </label>
+
+            <label class="field">
+              <span>Incluir categorias</span>
+              <select id="includeCategories" class="input">
+                <option value="yes" selected>Sim</option>
+                <option value="no">Não</option>
+              </select>
+            </label>
+
+            <button class="btn btn-primary" type="submit">Gerar relatório</button>
+            <p class="hint">No MVP, o “Exportar PDF” pode usar impressão do navegador (Ctrl+P).</p>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Resumo</div>
+              <div class="muted">Indicadores do período</div>
+            </div>
+          </div>
+
+          <div class="grid" style="grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="card" style="box-shadow:none;">
+              <div class="card-label">Entradas</div>
+              <div id="repIncome" class="kpi">R$ 0,00</div>
+              <div id="repIncomeSub" class="sub muted">—</div>
+            </div>
+            <div class="card" style="box-shadow:none;">
+              <div class="card-label">Saídas</div>
+              <div id="repExpense" class="kpi">R$ 0,00</div>
+              <div id="repExpenseSub" class="sub muted">—</div>
+            </div>
+            <div class="card" style="box-shadow:none;">
+              <div class="card-label">Saldo</div>
+              <div id="repBalance" class="kpi">R$ 0,00</div>
+              <div id="repBalanceSub" class="sub muted">—</div>
+            </div>
+            <div class="card" style="box-shadow:none;">
+              <div class="card-label">Total lançamentos</div>
+              <div id="repCount" class="kpi">0</div>
+              <div class="sub muted">Entradas + Saídas</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid" style="grid-template-columns: 1.6fr 1fr; margin-top:14px;">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Evolução diária</div>
+              <div class="muted">Entradas e saídas do mês</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="repLine" height="120"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Categorias</div>
+              <div class="muted">Distribuição por categoria</div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="repPie" height="220"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:14px;">
+        <div class="card-head">
+          <div>
+            <div class="card-title">Lançamentos do período</div>
+            <div class="muted">Lista detalhada para auditoria</div>
+          </div>
+        </div>
+
+        <div class="table">
+          <div class="row head">
+            <div>Data</div><div>Tipo</div><div>Categoria</div><div>Descrição</div><div class="right">Valor</div>
+          </div>
+          <div id="repRows"></div>
+        </div>
+      </section>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initThemeToggle } from "./js/ui.js";
+    initThemeToggle("btnTheme");
+
+    // impressão simples
+    document.getElementById("btnPrint")?.addEventListener("click", () => window.print());
+    document.getElementById("btnExport")?.addEventListener("click", () => window.print());
+  </script>
+
+  <!-- JS da página (vamos criar quando você pedir) -->
+  <script type="module" src="./js/pages/report.js"></script>
+</body>
+</html>
