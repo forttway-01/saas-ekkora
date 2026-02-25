@@ -5,47 +5,94 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ekkora • Login</title>
 
-  <link rel="icon" href="./assets/favicon.ico" type="image/x-icon">
+  <!-- favicon (opcional) -->
+  <link rel="icon" href="./favicon.ico" type="image/x-icon">
+
   <link rel="stylesheet" href="./css/app.css" />
 </head>
-<body class="auth-body">
 
-  <div class="auth-container">
+<body class="auth-body stripe">
+  <!-- fundo animado -->
+  <div class="stripe-bg">
+    <div class="stripe-blob b1"></div>
+    <div class="stripe-blob b2"></div>
+    <div class="stripe-blob b3"></div>
+    <div class="stripe-noise"></div>
+  </div>
 
-    <!-- LOGO CENTRAL -->
-    <div class="auth-logo">
-      <img src="./logo.png" alt="Ekkora Logo">
-    </div>
+  <main class="stripe-wrap">
+    <!-- topo com logo -->
+    <header class="stripe-header">
+      <div class="stripe-logo">
+        <img src="./logo.png" alt="Ekkora" />
+      </div>
+      <h1 class="stripe-title">Bem-vindo ao Ekkora</h1>
+      <p class="stripe-sub">Gestão financeira inteligente para igrejas • tempo real</p>
+    </header>
 
-    <!-- CARD -->
-    <div class="auth-card-premium">
-
-      <h2>Bem-vindo ao Ekkora</h2>
-      <p class="auth-subtitle">Gestão financeira inteligente para igrejas</p>
-
-      <div class="tabs">
-        <button class="tab is-active" data-tab="login">Entrar</button>
-        <button class="tab" data-tab="register">Criar conta</button>
+    <!-- card -->
+    <section class="stripe-card">
+      <div class="stripe-tabs" role="tablist" aria-label="Acesso">
+        <button class="stripe-tab is-active tab" data-tab="login" type="button">Entrar</button>
+        <button class="stripe-tab tab" data-tab="register" type="button">Criar conta</button>
       </div>
 
       <!-- LOGIN -->
-      <form id="formLogin" class="form is-visible" data-pane="login">
-        <input id="loginEmail" type="email" placeholder="Email" required />
-        <input id="loginPass" type="password" placeholder="Senha" required />
-        <button class="btn btn-premium" type="submit">Entrar</button>
+      <form id="formLogin" class="stripe-form form is-visible" data-pane="login" autocomplete="on">
+        <label class="stripe-field">
+          <span>Email</span>
+          <input id="loginEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com" required />
+        </label>
+
+        <label class="stripe-field">
+          <span>Senha</span>
+          <input id="loginPass" type="password" autocomplete="current-password" placeholder="••••••••" required />
+        </label>
+
+        <button class="stripe-btn" type="submit">
+          <span>Entrar</span>
+          <span class="stripe-btn-arrow">→</span>
+        </button>
+
+        <p class="stripe-hint">Ao entrar, você será redirecionado para o Dashboard.</p>
       </form>
 
       <!-- REGISTER -->
-      <form id="formRegister" class="form" data-pane="register">
-        <input id="regName" type="text" placeholder="Nome" required />
-        <input id="regEmail" type="email" placeholder="Email" required />
-        <input id="regPass" type="password" placeholder="Senha" required />
-        <button class="btn btn-premium" type="submit">Criar conta</button>
-      </form>
+      <form id="formRegister" class="stripe-form form" data-pane="register" autocomplete="on">
+        <label class="stripe-field">
+          <span>Nome</span>
+          <input id="regName" type="text" autocomplete="name" placeholder="Seu nome" required />
+        </label>
 
-      <div id="toast" class="toast"></div>
-    </div>
-  </div>
+        <label class="stripe-field">
+          <span>Email</span>
+          <input id="regEmail" type="email" autocomplete="email" placeholder="seuemail@exemplo.com" required />
+        </label>
+
+        <label class="stripe-field">
+          <span>Senha</span>
+          <input id="regPass" type="password" autocomplete="new-password" placeholder="mín. 6 caracteres" required />
+        </label>
+
+        <button class="stripe-btn" type="submit">
+          <span>Criar conta</span>
+          <span class="stripe-btn-arrow">→</span>
+        </button>
+
+        <p class="stripe-hint">Depois você cria a igreja (onboarding rápido).</p>
+      </form>
+    </section>
+
+    <!-- rodapé -->
+    <footer class="stripe-foot">
+      <div class="stripe-mini">
+        <span class="dot"></span>
+        <span>Seguro • Simples • Rápido</span>
+      </div>
+    </footer>
+
+    <div id="toast" class="toast" aria-live="polite"></div>
+  </main>
 
   <script type="module" src="./js/auth.js"></script>
 </body>
