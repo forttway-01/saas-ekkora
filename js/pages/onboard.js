@@ -1,62 +1,101 @@
 // ======================================
-// Ekkora • onboard.js (MVP estável)
-// - Protege rota (precisa estar logado)
-// - Carrega igreja e preferências
-// - Salva nome/cidade/estado da igreja
-// - Salva meta mensal no users/{uid}.monthlyTarget
+// Ekkora • onboard.js (MODO DUPLO - sem loop)
+// - Se NÃO tem churchId: cria igreja (churchId = uid) + vira admin
+// - Se JÁ tem churchId: permite editar dados da igreja e preferências
 // ======================================
-import { auth } from "../firebase.js";
+
+import { auth, db } from "../firebase.js";
 import {
   userRef, churchRef,
-  getDoc, updateDoc,
-  serverTimestamp
+  getDoc, setDoc, updateDoc,
+  doc, serverTimestamp
 } from "../db.js";
 
 import { toast, initThemeToggle } from "../ui.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+function go(path) {
+  const current = (window.location.pathname.split("/").pop() || "").toLowerCase();
+  const target = path.replace("./", "").toLowerCase();
+  if (current === target) return;
+  window.location.replace(path);
+}
+
+// Cria igreja no padrão MVP: churchId = uid do dono
+async function createChurchForUser(user, { name, city, state }) {
+  const churchId = user.uid;
+
+  // 1) cria igreja
+  await setDoc(churchRef(churchId), {
+    id: churchId,
+    ownerUid: user.uid,
+    name,
+    city: city || "",
+    state: state || "",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+
+  // 2) seta churchId no user
+  await updateDoc(userRef(user.uid), {
+    churchId,
+    updatedAt: serverTimestamp()
+  });
+
+  // 3) cria member admin (owner)
+  await setDoc(doc(db, "churches", churchId, "members", user.uid), {
+    uid: user.uid,
+    email: (user.email || "").toLowerCase(),
+    name: user.displayName || "Admin",
+    role: "admin",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }, { merge: true });
+
+  return churchId;
+}
+
 async function boot(user) {
-  // tema + logout
   initThemeToggle("btnTheme");
 
   document.getElementById("btnLogout")?.addEventListener("click", async () => {
     await signOut(auth);
-    window.location.href = "./index.html";
+    go("./index.html");
   });
 
   // pega user doc
   const uSnap = await getDoc(userRef(user.uid));
-  const u = uSnap.data();
+  const u = uSnap.data() || {};
+  const hasChurch = !!u.churchId;
 
-  if (!u?.churchId) {
-    // se não tem churchId, manda pro index (onde tem onboarding/login)
-    window.location.href = "./index.html";
-    return;
-  }
-
-  const churchId = u.churchId;
-
-  // carrega igreja
-  const cSnap = await getDoc(churchRef(churchId));
-  const c = cSnap.data() || {};
-
-  // Preenche campos
+  // elementos
   const churchNameEl = document.getElementById("churchName");
   const churchCityEl = document.getElementById("churchCity");
   const churchStateEl = document.getElementById("churchState");
 
-  if (churchNameEl) churchNameEl.value = c.name || "";
-  if (churchCityEl) churchCityEl.value = c.city || "";
-  if (churchStateEl) churchStateEl.value = c.state || "";
-
-  // Preferências
   const targetEl = document.getElementById("monthlyTarget");
   const currencyEl = document.getElementById("currency");
 
+  // prefs defaults
   if (targetEl) targetEl.value = Number(u.monthlyTarget || 0);
   if (currencyEl) currencyEl.value = u.currency || "BRL";
 
-  // SALVAR IGREJA
+  // Se já tem igreja, carrega igreja e preenche campos (modo edição)
+  if (hasChurch) {
+    try {
+      const cSnap = await getDoc(churchRef(u.churchId));
+      const c = cSnap.data() || {};
+
+      if (churchNameEl) churchNameEl.value = c.name || "";
+      if (churchCityEl) churchCityEl.value = c.city || "";
+      if (churchStateEl) churchStateEl.value = c.state || "";
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || "Erro ao carregar dados da igreja.", "error");
+    }
+  }
+
+  // FORM IGREJA: cria ou atualiza dependendo se tem churchId
   document.getElementById("formOnboard")?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -67,22 +106,29 @@ async function boot(user) {
     if (!name) return toast("Informe o nome da igreja.", "error");
 
     try {
-      await updateDoc(churchRef(churchId), {
-        name,
-        city,
-        state,
-        updatedAt: serverTimestamp(),
-        updatedBy: user.uid
-      });
-
-      toast("Igreja atualizada!", "success");
+      if (!hasChurch) {
+        // cria igreja
+        await createChurchForUser(user, { name, city, state });
+        toast("Igreja criada! Bem-vindo 👊", "success");
+        go("./dashboard.html");
+      } else {
+        // edita igreja existente
+        await updateDoc(churchRef(u.churchId), {
+          name,
+          city,
+          state,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.uid
+        });
+        toast("Igreja atualizada!", "success");
+      }
     } catch (err) {
       console.error(err);
-      toast(err?.message || "Erro ao salvar igreja.", "error");
+      toast(err?.message || "Erro ao salvar igreja (Rules?).", "error");
     }
   });
 
-  // SALVAR PREFERÊNCIAS
+  // FORM PREFS: salva preferências (sempre)
   document.getElementById("formPrefs")?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -95,7 +141,6 @@ async function boot(user) {
         currency,
         updatedAt: serverTimestamp()
       });
-
       toast("Preferências salvas!", "success");
     } catch (err) {
       console.error(err);
@@ -105,9 +150,6 @@ async function boot(user) {
 }
 
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "./index.html";
-    return;
-  }
+  if (!user) return go("./index.html");
   boot(user);
 });
