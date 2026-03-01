@@ -723,3 +723,48 @@ body.auth-body.stripe{
   .stripe-logo{ width:78px; height:78px; }
   .stripe-logo img{ width:58px; height:58px; }
 }
+
+/* ===== LOGO GLOBAL SAAS ===== */
+
+.logoWrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logoWrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Remove visual antigo da letra */
+.logoMark {
+  display: none;
+}
+
+/* ====== Logo com imagem (mantém seu tema atual) ====== */
+.logoWrap{
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  overflow: hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.logoWrap img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}

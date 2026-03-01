@@ -1,99 +1,161 @@
 <!doctype html>
-<html lang="pt-br" data-theme="dark">
+<html lang="pt-br">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ekkora • Onboarding</title>
+  <title>Ekkora • Configurações</title>
+
+  <link rel="icon" href="./favicon.png" type="image/png">
   <link rel="stylesheet" href="./css/app.css" />
-  <link rel="icon" href="./favicon.png" type="image/x-icon">
+  <link rel="stylesheet" href="./css/layout-saas.css" />
 </head>
+
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand side-brand">
-        <div class="logoMark">E</div>
-        <div class="brandText">
-          <h1>Ekkora</h1>
-          <p class="muted">Onboarding</p>
+  <div class="ekkApp">
+    <aside class="ekkSide">
+      <div class="ekkBrand">
+        <div class="ekkLogo">
+          <img src="./logo.png" alt="Ekkora">
+        </div>
+        <div>
+          <div class="ekkBrandTitle">Ekkora</div>
+          <div id="churchLabel" class="ekkBrandSub">Carregando…</div>
         </div>
       </div>
 
-     <nav class="nav">
-  <a class="nav-item" href="./dashboard.html">Dashboard</a>
-  <a class="nav-item" href="./finance.html">Finanças</a>
-  <a class="nav-item" href="./members.html">Membros</a>
-  <a class="nav-item" href="./report.html">Relatórios</a>
-  <a class="nav-item" href="./onboard.html">Onboarding</a>
-</nav>
+      <nav class="ekkNav">
+        <a href="./dashboard.html">Dashboard</a>
+        <a href="./finance.html">Finanças</a>
+        <a href="./members.html">Equipe (Usuários)</a>
+        <a href="./people.html">Membros (Cadastro)</a>
+        <a href="./report.html">Relatórios</a>
+        <a class="is-active" href="./onboard.html">Configurações</a>
+      </nav>
 
-      <div class="side-bottom">
-        <button id="btnTheme" class="btn btn-ghost">🌗 Alternar tema</button>
-        <button id="btnLogout" class="btn btn-danger">Sair</button>
+      <div class="ekkSideBottom">
+        <button id="btnTheme" class="btn ghost" type="button">🌗 Alternar tema</button>
+        <button id="btnLogout" class="btn danger" type="button">Sair</button>
       </div>
     </aside>
 
-    <main class="content">
-      <header class="topbar">
+    <main class="ekkMain">
+      <header class="ekkTop">
         <div>
-          <h2>Onboarding</h2>
-          <p class="muted">Configurações iniciais da igreja</p>
+          <h1>Configurações</h1>
+          <p>Igreja + preferências + categorias financeiras</p>
         </div>
       </header>
 
-      <section class="grid" style="grid-template-columns: 1fr 1fr;">
-        <div class="card">
-          <div class="card-head">
+      <!-- Igreja + Preferências -->
+      <section class="grid2">
+        <div class="ekkCard">
+          <div class="cardHead">
             <div>
-              <div class="card-title">Criar / Ajustar Igreja</div>
-              <div class="muted">Nome e informações básicas</div>
+              <div class="cardTitle">Dados da Igreja</div>
+              <div class="muted">Nome, cidade e estado</div>
             </div>
           </div>
 
-          <form id="formOnboard" class="form is-visible">
-            <label class="field">
-              <span>Nome da Igreja</span>
-              <input id="churchName" class="input" type="text" placeholder="Ex: Igreja Vida Nova" required />
-            </label>
+          <div class="cardPad">
+            <form id="formOnboard" class="grid2">
+              <label>
+                <div class="muted" style="margin-bottom:6px;">Nome *</div>
+                <input id="churchName" class="input" required placeholder="Ex: Igreja Batista Central" />
+              </label>
 
-            <label class="field">
-              <span>Cidade (opcional)</span>
-              <input id="churchCity" class="input" type="text" placeholder="Ex: Campina Grande" />
-            </label>
+              <label>
+                <div class="muted" style="margin-bottom:6px;">Cidade</div>
+                <input id="churchCity" class="input" placeholder="Ex: Campina Grande" />
+              </label>
 
-            <label class="field">
-              <span>Estado (opcional)</span>
-              <input id="churchState" class="input" type="text" placeholder="Ex: PB" />
-            </label>
+              <label style="grid-column:1/-1;">
+                <div class="muted" style="margin-bottom:6px;">Estado</div>
+                <input id="churchState" class="input" placeholder="Ex: PB" />
+              </label>
 
-            <button class="btn btn-primary" type="submit">Salvar</button>
-            <p class="hint">Depois a gente amarra isso com multiusuários e permissões.</p>
-          </form>
+              <div style="grid-column:1/-1; display:flex; justify-content:flex-end;">
+                <button class="btn primary" type="submit">Salvar</button>
+              </div>
+            </form>
+          </div>
         </div>
 
-        <div class="card">
-          <div class="card-head">
+        <div class="ekkCard">
+          <div class="cardHead">
             <div>
-              <div class="card-title">Preferências</div>
-              <div class="muted">Meta mensal e formatações</div>
+              <div class="cardTitle">Preferências</div>
+              <div class="muted">Meta mensal e moeda</div>
             </div>
           </div>
 
-          <form id="formPrefs" class="form is-visible">
-            <label class="field">
-              <span>Meta mensal de entradas (R$)</span>
-              <input id="monthlyTarget" class="input" type="number" min="0" step="0.01" placeholder="Ex: 15000" />
-            </label>
+          <div class="cardPad">
+            <form id="formPrefs" class="grid2">
+              <label>
+                <div class="muted" style="margin-bottom:6px;">Meta mensal</div>
+                <input id="monthlyTarget" class="input" type="number" min="0" step="0.01" placeholder="Ex: 15000" />
+              </label>
 
-            <label class="field">
-              <span>Moeda</span>
-              <select id="currency" class="input">
-                <option value="BRL" selected>BRL (R$)</option>
-              </select>
-            </label>
+              <label>
+                <div class="muted" style="margin-bottom:6px;">Moeda</div>
+                <select id="currency" class="input">
+                  <option value="BRL">BRL</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </label>
 
-            <button class="btn btn-primary" type="submit">Salvar preferências</button>
-            <p class="hint">A moeda fica fixa em BRL no MVP (depois abrimos).</p>
-          </form>
+              <div style="grid-column:1/-1; display:flex; justify-content:flex-end;">
+                <button class="btn primary" type="submit">Salvar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Categorias -->
+      <section class="ekkCard" style="margin-top:12px;">
+        <div class="cardHead">
+          <div>
+            <div class="cardTitle">Categorias financeiras</div>
+            <div class="muted">Crie categorias de Entrada e Saída conforme sua necessidade</div>
+          </div>
+          <div class="muted" id="catRoleHint"></div>
+        </div>
+
+        <div class="cardPad">
+          <div class="grid2">
+            <!-- Entradas -->
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+                <div style="font-weight:800;">Categorias de Entrada</div>
+              </div>
+
+              <form id="formCatIncome" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                <input id="catIncomeName" class="input" placeholder="Ex: Dízimo" />
+                <button class="btn primary" type="submit">Adicionar</button>
+              </form>
+
+              <div id="incomeCats" class="ekkCard"></div>
+            </div>
+
+            <!-- Saídas -->
+            <div>
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
+                <div style="font-weight:800;">Categorias de Saída</div>
+              </div>
+
+              <form id="formCatExpense" style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+                <input id="catExpenseName" class="input" placeholder="Ex: Coffee break" />
+                <button class="btn primary" type="submit">Adicionar</button>
+              </form>
+
+              <div id="expenseCats" class="ekkCard"></div>
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:10px;">
+            Dica: depois a gente liga isso no Finance para você escolher a categoria numa lista (sem digitar).
+          </div>
         </div>
       </section>
 
@@ -101,12 +163,6 @@
     </main>
   </div>
 
-  <script type="module">
-    import { initThemeToggle } from "./js/ui.js";
-    initThemeToggle("btnTheme");
-  </script>
-
-  <!-- JS da página (vamos criar quando você pedir) -->
   <script type="module" src="./js/pages/onboard.js"></script>
 </body>
 </html>

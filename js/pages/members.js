@@ -67,8 +67,8 @@ function renderMembers(list) {
 
   list.forEach(m => {
     const row = document.createElement("div");
-    row.className = "row";
-    row.style.gridTemplateColumns = "1fr 220px 140px 140px";
+    row.className = "ekkRow";
+row.style.gridTemplateColumns = "1.2fr 1.2fr .8fr .8fr";
     row.innerHTML = `
       <div>${m.name || m.email || "-"}</div>
       <div>${m.email || "-"}</div>

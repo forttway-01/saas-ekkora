@@ -121,7 +121,8 @@ function renderLastRows(items) {
       : `<span class="badge expense">Saída</span>`;
 
     const row = document.createElement("div");
-    row.className = "row";
+   row.className = "ekkRow";
+row.style.gridTemplateColumns = ".7fr .7fr 1fr 1.2fr .8fr";
     row.innerHTML = `
       <div>${dateStr}</div>
       <div>${badge}</div>
@@ -193,14 +194,23 @@ function ensureLineChart(ctx, labels, incomes, expenses, balances) {
 }
 
 function ensurePieChart(ctx, byCategory) {
-  const entries = Object.entries(byCategory)
-    .sort((a,b) => b[1] - a[1])
+  const entries = Object.entries(byCategory || {})
+    .map(([k, v]) => [String(k || "Outros").trim() || "Outros", Number(v || 0)])
+    .filter(([, v]) => Number.isFinite(v))
+    .sort((a, b) => b[1] - a[1])
     .slice(0, 10);
 
-  const labels = entries.map(e => e[0]);
-  const values = entries.map(e => e[1]);
+  let labels = entries.map(e => e[0]);
+  let values = entries.map(e => e[1]);
 
-  // tons de verde (premium)
+  // ✅ Se não tiver dados (ou tudo zero), evita “gráfico invisível”
+  const sum = values.reduce((acc, n) => acc + (Number(n) || 0), 0);
+  if (!labels.length || sum <= 0) {
+    labels = ["Sem dados no período"];
+    values = [1];
+  }
+
+  // tons de verde (premium) + fallback para estado sem dados
   const greens = [
     "#0b5d3a","#0f6b43","#127a4b","#158a55","#18a062",
     "#1ab26c","#2ac47a","#4fd38f","#7de2ab","#b7f0d0"
@@ -208,13 +218,32 @@ function ensurePieChart(ctx, byCategory) {
 
   const data = {
     labels,
-    datasets: [{ data: values, backgroundColor: greens.slice(0, values.length), borderWidth: 0 }]
+    datasets: [{
+      data: values,
+      backgroundColor: (labels.length === 1 && labels[0].includes("Sem dados"))
+        ? ["rgba(255,255,255,.18)"]
+        : greens.slice(0, values.length),
+      borderWidth: 0
+    }]
   };
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false, // ✅ importantíssimo com wrappers novos
     plugins: {
-      legend: { labels: { color: getTextColor() } }
+      legend: {
+        display: !(labels.length === 1 && labels[0].includes("Sem dados")),
+        labels: { color: getTextColor() }
+      },
+      tooltip: {
+        callbacks: {
+          label: (item) => {
+            const v = Number(item.raw || 0);
+            if (labels.length === 1 && labels[0].includes("Sem dados")) return "Sem dados";
+            return `${item.label}: ${moneyBRL(v)}`;
+          }
+        }
+      }
     }
   };
 

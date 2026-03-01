@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ekkora • Membros</title>
+
+  <link rel="icon" href="./favicon.png" type="image/png">
+  <link rel="stylesheet" href="./css/app.css" />
+  <link rel="stylesheet" href="./css/layout-saas.css" />
+</head>
+
+<body>
+  <div class="ekkApp">
+    <!-- Sidebar -->
+    <aside class="ekkSide">
+      <div class="ekkBrand">
+        <div class="ekkLogo">
+          <img src="./logo.png" alt="Ekkora">
+        </div>
+        <div>
+          <div class="ekkBrandTitle">Ekkora</div>
+          <div class="ekkBrandSub" id="churchLabel">—</div>
+        </div>
+      </div>
+
+      <nav class="ekkNav">
+        <a href="./dashboard.html">Dashboard</a>
+        <a href="./finance.html">Finanças</a>
+        <a href="./members.html">Equipe (Usuários)</a>
+        <a class="is-active" href="./people.html">Membros (Cadastro)</a>
+        <a href="./report.html">Relatórios</a>
+        <a href="./onboard.html">Configurações</a>
+      </nav>
+
+      <div class="ekkSideBottom">
+        <button id="btnTheme" class="btn ghost" type="button">🌗 Alternar tema</button>
+        <button id="btnLogout" class="btn danger" type="button">Sair</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="ekkMain">
+      <header class="ekkTop">
+        <div>
+          <h1>Cadastro de Membros</h1>
+          <p>Ficha do membro (batismo, contatos, status, observações) — padrão SaaS.</p>
+        </div>
+
+        <div class="ekkActions">
+          <input id="search" class="input" placeholder="Buscar por nome, telefone, status..." />
+          <button id="btnNew" class="btn primary" type="button">+ Novo membro</button>
+        </div>
+      </header>
+
+      <section class="ekkCard">
+        <div class="ekkRow ekkHead" style="grid-template-columns: 1.2fr .5fr .8fr .9fr .9fr .7fr;">
+          <div>Nome</div>
+          <div>Idade</div>
+          <div>Telefone</div>
+          <div>Batismo</div>
+          <div>Status</div>
+          <div class="right">Ações</div>
+        </div>
+
+        <div id="peopleRows"></div>
+      </section>
+
+      <div id="toast" class="toast" aria-live="polite"></div>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalPerson" class="modal hidden">
+    <div class="modalCard">
+      <div class="modalTop">
+        <h3 id="modalTitle" style="margin:0;">Novo membro</h3>
+        <button id="closePerson" class="iconBtn" type="button">✕</button>
+      </div>
+
+      <form id="formPerson" class="formGrid">
+        <input type="hidden" id="personId" />
+
+        <label class="field">
+          <span>Nome completo *</span>
+          <input id="pName" class="input" required placeholder="Ex: Maria das Graças" />
+        </label>
+
+        <label class="field">
+          <span>Data de nascimento</span>
+          <input id="pBirth" class="input" type="date" />
+        </label>
+
+        <label class="field">
+          <span>Telefone/WhatsApp</span>
+          <input id="pPhone" class="input" placeholder="(83) 9xxxx-xxxx" />
+        </label>
+
+        <label class="field">
+          <span>E-mail</span>
+          <input id="pEmail" class="input" type="email" placeholder="membro@email.com" />
+        </label>
+
+        <label class="field">
+          <span>Data do batismo</span>
+          <input id="pBaptism" class="input" type="date" />
+        </label>
+
+        <label class="field">
+          <span>Status</span>
+          <select id="pStatus" class="input">
+            <option value="ativo">Ativo</option>
+            <option value="congregado">Congregado</option>
+            <option value="visitante">Visitante</option>
+            <option value="inativo">Inativo</option>
+          </select>
+        </label>
+
+        <label class="field" style="grid-column:1/-1;">
+          <span>Endereço</span>
+          <input id="pAddress" class="input" placeholder="Rua, número, bairro, cidade..." />
+        </label>
+
+        <label class="field" style="grid-column:1/-1;">
+          <span>Observações</span>
+          <textarea id="pNotes" class="input" rows="4" placeholder="Ex: líder de célula, louvor, etc."></textarea>
+        </label>
+
+        <div class="modalActions" style="grid-column:1/-1;">
+          <button type="button" id="cancelPerson" class="btn ghost">Cancelar</button>
+          <button type="submit" class="btn primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="./js/pages/people.js"></script>
+</body>
+</html>

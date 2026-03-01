@@ -1,85 +1,156 @@
 // ======================================
-// Ekkora • finance.js (tempo real)
+// Ekkora • finance.js (ESTÁVEL + Categorias dinâmicas)
+// - Categorias vêm de churches/{churchId}/categories (income/expense)
+// - Dropdown muda conforme o Tipo
+// - Lançamentos em churches/{churchId}/finance com date Timestamp
 // ======================================
-import { auth } from "../firebase.js";
+
+import { auth, db } from "../firebase.js";
 import {
   userRef, churchRef, financeCol,
-  getDoc, addDoc, updateDoc, deleteDoc,
-  query, where, orderBy, onSnapshot,
-  serverTimestamp, Timestamp, doc
+  getDoc, setDoc, deleteDoc,
+  doc, collection,
+  query, orderBy, onSnapshot,
+  Timestamp, serverTimestamp
 } from "../db.js";
 
-import { toast, initThemeToggle, yyyyMmDdToDate, dateToYyyyMmDd, moneyBRL } from "../ui.js";
+import { moneyBRL, toast, initThemeToggle } from "../ui.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
 let CHURCH_ID = null;
-let currentDocs = [];
+let ME_ROLE = "viewer";
 
-function firstDayOfMonth(d = new Date()) {
-  return new Date(d.getFullYear(), d.getMonth(), 1, 0, 0, 0);
+let ALL = [];
+let CATS = []; // {id,name,type}
+
+function go(path) {
+  const cur = (window.location.pathname.split("/").pop() || "").toLowerCase();
+  const tgt = path.replace("./", "").toLowerCase();
+  if (cur === tgt) return;
+  window.location.replace(path);
 }
-function lastDayOfMonth(d = new Date()) {
-  return new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-}
-function toTs(date) {
-  return Timestamp.fromDate(date);
+
+function canWrite() {
+  return ME_ROLE === "admin" || ME_ROLE === "treasurer";
 }
 
 function escapeHtml(s) {
-  return String(s || "").replace(/[&<>"']/g, m => ({
+  return String(s ?? "").replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[m]));
 }
 
-function openModal(item) {
-  document.getElementById("modal").classList.remove("hidden");
-  document.getElementById("editId").value = item.id;
-
-  document.getElementById("editType").value = item.type || "income";
-  document.getElementById("editAmount").value = Number(item.amount || 0);
-  document.getElementById("editCategory").value = item.category || "";
-  document.getElementById("editNote").value = item.note || "";
-
-  const dt = item.date?.toDate ? item.date.toDate() : new Date(item.date);
-  document.getElementById("editDate").value = dateToYyyyMmDd(dt);
+function fmtDate(tsOrAny) {
+  try {
+    const d = tsOrAny?.toDate ? tsOrAny.toDate() : new Date(tsOrAny);
+    if (isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("pt-BR");
+  } catch { return "—"; }
 }
 
-function closeModal() {
-  document.getElementById("modal").classList.add("hidden");
+function catsCol() {
+  return collection(db, "churches", CHURCH_ID, "categories");
 }
 
-function renderRows(items) {
-  const wrap = document.getElementById("rows");
+function fillCategorySelect(type) {
+  const sel = document.getElementById("fCategory");
+  const hint = document.getElementById("catHint");
+  if (!sel) return;
+
+  const list = (CATS || [])
+    .filter(c => c.type === type)
+    .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+  const current = sel.value;
+
+  sel.innerHTML = "";
+  const opt0 = document.createElement("option");
+  opt0.value = "";
+  opt0.textContent = list.length ? "Selecione…" : "Nenhuma categoria criada";
+  sel.appendChild(opt0);
+
+  // sempre ter "Outros" como fallback
+  const out = document.createElement("option");
+  out.value = "Outros";
+  out.textContent = "Outros";
+  sel.appendChild(out);
+
+  for (const c of list) {
+    const o = document.createElement("option");
+    o.value = c.name;
+    o.textContent = c.name;
+    sel.appendChild(o);
+  }
+
+  // restaura seleção se ainda existir
+  const exists = Array.from(sel.options).some(o => o.value === current);
+  sel.value = exists ? current : (list.length ? "" : "Outros");
+
+  if (hint) {
+    hint.textContent = list.length
+      ? "Categorias vindas de Configurações."
+      : "Crie categorias em Configurações (ou use 'Outros').";
+  }
+}
+
+function applySearch() {
+  const q = (document.getElementById("searchFinance")?.value || "").trim().toLowerCase();
+  const list = !q ? ALL : ALL.filter(it => {
+    const hay = [it.type, it.category, it.note].join(" ").toLowerCase();
+    return hay.includes(q);
+  });
+  render(list);
+}
+
+function render(items) {
+  const wrap = document.getElementById("financeRows");
+  if (!wrap) return;
+
   wrap.innerHTML = "";
 
-  for (const it of items) {
-    const dt = it.date?.toDate ? it.date.toDate() : new Date(it.date);
-    const dateStr = dt.toLocaleDateString("pt-BR");
-    const badge = it.type === "income"
-      ? `<span class="badge income">Entrada</span>`
-      : `<span class="badge expense">Saída</span>`;
+  if (!items.length) {
+    wrap.innerHTML = `<div class="muted" style="padding:14px;">Nenhum lançamento ainda.</div>`;
+    return;
+  }
 
+  for (const it of items) {
     const row = document.createElement("div");
-    row.className = "row";
-    row.style.gridTemplateColumns = "120px 110px 150px 1fr 140px 140px";
+    row.className = "ekkRow";
+    row.style.gridTemplateColumns = ".8fr .8fr 1fr 1.4fr .8fr .7fr";
+
+    const badge = it.type === "income"
+      ? `<span class="pill">Entrada</span>`
+      : `<span class="pill">Saída</span>`;
+
     row.innerHTML = `
-      <div>${dateStr}</div>
+      <div>${fmtDate(it.date)}</div>
       <div>${badge}</div>
-      <div>${escapeHtml(it.category || "-")}</div>
-      <div>${escapeHtml(it.note || "-")}</div>
-      <div class="right">${moneyBRL(it.amount || 0)}</div>
-      <div class="actions-inline">
-        <button class="link-btn" data-action="edit" data-id="${it.id}">Editar</button>
+      <div>${escapeHtml(it.category || "—")}</div>
+      <div>${escapeHtml(it.note || "—")}</div>
+      <div class="right">${moneyBRL(Number(it.amount || 0))}</div>
+      <div class="right">
+        ${canWrite()
+          ? `<button class="btn sm danger btnDel" data-id="${it.id}">Excluir</button>`
+          : `<span class="muted">—</span>`
+        }
       </div>
     `;
     wrap.appendChild(row);
   }
 
-  wrap.querySelectorAll("button[data-action='edit']").forEach(btn => {
-    btn.addEventListener("click", () => {
+  wrap.querySelectorAll(".btnDel").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!canWrite()) return toast("Você não tem permissão para excluir.", "error");
       const id = btn.dataset.id;
-      const item = currentDocs.find(x => x.id === id);
-      if (item) openModal(item);
+      if (!confirm("Excluir este lançamento?")) return;
+
+      try {
+        await deleteDoc(doc(db, "churches", CHURCH_ID, "finance", id));
+        toast("Lançamento excluído.", "success");
+      } catch (err) {
+        console.error(err);
+        toast(err?.message || "Erro ao excluir.", "error");
+      }
     });
   });
 }
@@ -89,150 +160,111 @@ async function boot(user) {
 
   document.getElementById("btnLogout")?.addEventListener("click", async () => {
     await signOut(auth);
-    window.location.href = "./index.html";
+    go("./index.html");
   });
 
-  document.getElementById("closeModal")?.addEventListener("click", closeModal);
-  document.getElementById("modal")?.addEventListener("click", (e) => {
-    if (e.target?.id === "modal") closeModal();
-  });
-
-  // data padrão: hoje
-  const dateInput = document.getElementById("date");
-  dateInput.value = dateToYyyyMmDd(new Date());
-
-  // user doc -> churchId
+  // user doc
   const uSnap = await getDoc(userRef(user.uid));
   const u = uSnap.data();
-  if (!u?.churchId) {
-    window.location.href = "./index.html";
-    return;
-  }
+  if (!u?.churchId) return go("./onboard.html");
+
   CHURCH_ID = u.churchId;
 
-  // igreja label
-  const cSnap = await getDoc(churchRef(CHURCH_ID));
-  const c = cSnap.data();
-  document.getElementById("churchLabel").textContent = c?.name || "Minha igreja";
+  // church label
+  try {
+    const cSnap = await getDoc(churchRef(CHURCH_ID));
+    const c = cSnap.data();
+    const label = document.getElementById("churchLabel");
+    if (label) label.textContent = c?.name || "Minha igreja";
+  } catch {}
 
-  // listener do mês
-  const from = firstDayOfMonth(new Date());
-  const to = lastDayOfMonth(new Date());
+  // role
+  try {
+    const myMemberSnap = await getDoc(doc(db, "churches", CHURCH_ID, "members", user.uid));
+    ME_ROLE = myMemberSnap.exists() ? (myMemberSnap.data()?.role || "viewer") : "viewer";
+  } catch {
+    ME_ROLE = "viewer";
+  }
 
-  const q = query(
-    financeCol(CHURCH_ID),
-    where("date", ">=", toTs(from)),
-    where("date", "<=", toTs(to)),
-    orderBy("date", "desc")
-  );
+  // default date = hoje
+  const fDate = document.getElementById("fDate");
+  if (fDate && !fDate.value) fDate.value = new Date().toISOString().slice(0, 10);
 
-  onSnapshot(q, (snap) => {
-    currentDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderRows(currentDocs);
+  // search
+  document.getElementById("searchFinance")?.addEventListener("input", applySearch);
+
+  // tipo -> atualiza categorias
+  const fType = document.getElementById("fType");
+  fType?.addEventListener("change", () => fillCategorySelect(fType.value));
+
+  // realtime categories
+  onSnapshot(query(catsCol(), orderBy("name", "asc")), (snap) => {
+    CATS = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    fillCategorySelect(fType?.value || "income");
   }, (err) => {
     console.error(err);
-    toast(err?.message || "Erro ao carregar finanças", "error");
+    toast(err?.message || "Erro ao carregar categorias.", "error");
+    fillCategorySelect(fType?.value || "income");
   });
 
-  // CREATE
-  document.getElementById("formFinance")?.addEventListener("submit", async (e) => {
+  // form
+  const form = document.getElementById("formFinance");
+  form?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const type = document.getElementById("type").value;
-    const amount = Number(document.getElementById("amount").value || 0);
-    const category = document.getElementById("category").value.trim();
-    const note = document.getElementById("note").value.trim();
-    const dateStr = document.getElementById("date").value;
+    if (!canWrite()) {
+      toast("Sem permissão para lançar. Peça ao admin para te dar Tesoureiro/Admin.", "error");
+      return;
+    }
 
-    if (!category) return toast("Informe a categoria.", "error");
-    if (!dateStr) return toast("Informe a data.", "error");
-    if (!(amount > 0)) return toast("Informe um valor maior que 0.", "error");
+    const type = (document.getElementById("fType")?.value || "income").trim();
+    const amount = Number(document.getElementById("fAmount")?.value || 0);
+    const category = (document.getElementById("fCategory")?.value || "").trim();
+    const dateISO = (document.getElementById("fDate")?.value || "").trim();
+    const note = (document.getElementById("fNote")?.value || "").trim();
+
+    if (!dateISO) return toast("Informe a data.", "error");
+    if (!amount || amount <= 0) return toast("Informe um valor válido.", "error");
+    if (!category) return toast("Selecione uma categoria.", "error");
+
+    // Timestamp (Dashboard filtra por Timestamp)
+    const date = Timestamp.fromDate(new Date(dateISO + "T12:00:00"));
 
     try {
-      await addDoc(financeCol(CHURCH_ID), {
+      const newRef = doc(financeCol(CHURCH_ID)); // id automático
+      await setDoc(newRef, {
         type,
         amount,
         category,
-        note,
-        date: Timestamp.fromDate(yyyyMmDdToDate(dateStr)),
+        note: note || null,
+        date,
         createdAt: serverTimestamp(),
-        createdBy: user.uid
+        createdByUid: user.uid
       });
-
-      // reset
-      document.getElementById("amount").value = "";
-      document.getElementById("category").value = "";
-      document.getElementById("note").value = "";
-      document.getElementById("type").value = "income";
-      document.getElementById("date").value = dateToYyyyMmDd(new Date());
 
       toast("Lançamento salvo!", "success");
+      form.reset();
+      if (fDate) fDate.value = new Date().toISOString().slice(0, 10);
+      document.getElementById("fType").value = "income";
+      fillCategorySelect("income"); // repõe options após reset
     } catch (err) {
-      console.error(err);
-      toast(err?.message || "Erro ao salvar", "error");
+      console.error("SAVE FINANCE ERROR:", err);
+      toast(err?.message || "Erro ao salvar lançamento.", "error");
     }
   });
 
-  // EDIT SUBMIT
-  document.getElementById("formEdit")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const id = document.getElementById("editId").value;
-    const type = document.getElementById("editType").value;
-    const amount = Number(document.getElementById("editAmount").value || 0);
-    const category = document.getElementById("editCategory").value.trim();
-    const note = document.getElementById("editNote").value.trim();
-    const dateStr = document.getElementById("editDate").value;
-
-    if (!id) return;
-    if (!category) return toast("Informe a categoria.", "error");
-    if (!dateStr) return toast("Informe a data.", "error");
-    if (!(amount > 0)) return toast("Informe um valor maior que 0.", "error");
-
-    try {
-      const ref = doc((await import("../firebase.js")).db, "churches", CHURCH_ID, "finance", id);
-      await updateDoc(ref, {
-        type,
-        amount,
-        category,
-        note,
-        date: Timestamp.fromDate(yyyyMmDdToDate(dateStr)),
-        updatedAt: serverTimestamp(),
-        updatedBy: user.uid
-      });
-
-      closeModal();
-      toast("Atualizado!", "success");
-    } catch (err) {
-      console.error(err);
-      toast(err?.message || "Erro ao atualizar", "error");
-    }
-  });
-
-  // DELETE
-  document.getElementById("btnDelete")?.addEventListener("click", async () => {
-    const id = document.getElementById("editId").value;
-    if (!id) return;
-
-    if (!confirm("Excluir este lançamento?")) return;
-
-    try {
-      const ref = doc((await import("../firebase.js")).db, "churches", CHURCH_ID, "finance", id);
-      await deleteDoc(ref);
-
-      closeModal();
-      toast("Excluído!", "success");
-    } catch (err) {
-      console.error(err);
-      toast(err?.message || "Erro ao excluir", "error");
-    }
+  // realtime finance
+  const q = query(financeCol(CHURCH_ID), orderBy("date", "desc"));
+  onSnapshot(q, (snap) => {
+    ALL = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    applySearch();
+  }, (err) => {
+    console.error(err);
+    toast(err?.message || "Erro ao carregar finanças.", "error");
   });
 }
 
 onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "./index.html";
-    return;
-  }
+  if (!user) return go("./index.html");
   boot(user);
 });

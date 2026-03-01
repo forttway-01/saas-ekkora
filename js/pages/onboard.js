@@ -1,58 +1,45 @@
 // ======================================
-// Ekkora • onboard.js (MODO DUPLO - sem loop)
-// - Se NÃO tem churchId: cria igreja (churchId = uid) + vira admin
-// - Se JÁ tem churchId: permite editar dados da igreja e preferências
+// Ekkora • onboard.js (Config + Categorias)
+// - Protege rota
+// - Edita igreja + prefs
+// - CRUD de categorias: churches/{churchId}/categories
 // ======================================
 
 import { auth, db } from "../firebase.js";
 import {
   userRef, churchRef,
-  getDoc, setDoc, updateDoc,
-  doc, serverTimestamp
+  getDoc, updateDoc,
+  serverTimestamp,
+  collection, doc, setDoc, deleteDoc,
+  query, orderBy, onSnapshot
 } from "../db.js";
 
 import { toast, initThemeToggle } from "../ui.js";
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
+let CHURCH_ID = null;
+let ME_ROLE = "viewer";
+let unsubCats = null;
+
 function go(path) {
-  const current = (window.location.pathname.split("/").pop() || "").toLowerCase();
-  const target = path.replace("./", "").toLowerCase();
-  if (current === target) return;
+  const cur = (window.location.pathname.split("/").pop() || "").toLowerCase();
+  const tgt = path.replace("./", "").toLowerCase();
+  if (cur === tgt) return;
   window.location.replace(path);
 }
 
-// Cria igreja no padrão MVP: churchId = uid do dono
-async function createChurchForUser(user, { name, city, state }) {
-  const churchId = user.uid;
+function canManageCategories() {
+  return ME_ROLE === "admin" || ME_ROLE === "treasurer";
+}
 
-  // 1) cria igreja
-  await setDoc(churchRef(churchId), {
-    id: churchId,
-    ownerUid: user.uid,
-    name,
-    city: city || "",
-    state: state || "",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  }, { merge: true });
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[m]));
+}
 
-  // 2) seta churchId no user
-  await updateDoc(userRef(user.uid), {
-    churchId,
-    updatedAt: serverTimestamp()
-  });
-
-  // 3) cria member admin (owner)
-  await setDoc(doc(db, "churches", churchId, "members", user.uid), {
-    uid: user.uid,
-    email: (user.email || "").toLowerCase(),
-    name: user.displayName || "Admin",
-    role: "admin",
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  }, { merge: true });
-
-  return churchId;
+function catsCol() {
+  return collection(db, "churches", CHURCH_ID, "categories");
 }
 
 async function boot(user) {
@@ -63,42 +50,44 @@ async function boot(user) {
     go("./index.html");
   });
 
-  // pega user doc
+  // user doc
   const uSnap = await getDoc(userRef(user.uid));
   const u = uSnap.data() || {};
-  const hasChurch = !!u.churchId;
 
-  // elementos
+  if (!u?.churchId) return go("./index.html");
+  CHURCH_ID = u.churchId;
+
+  // role
+  try {
+    const myMemberSnap = await getDoc(doc(db, "churches", CHURCH_ID, "members", user.uid));
+    ME_ROLE = myMemberSnap.exists() ? (myMemberSnap.data()?.role || "viewer") : "viewer";
+  } catch {
+    ME_ROLE = "viewer";
+  }
+
+  // church label
+  const cSnap = await getDoc(churchRef(CHURCH_ID));
+  const c = cSnap.data() || {};
+  document.getElementById("churchLabel").textContent = c?.name || "Minha igreja";
+
+  // Preenche campos Igreja
   const churchNameEl = document.getElementById("churchName");
   const churchCityEl = document.getElementById("churchCity");
   const churchStateEl = document.getElementById("churchState");
 
+  if (churchNameEl) churchNameEl.value = c.name || "";
+  if (churchCityEl) churchCityEl.value = c.city || "";
+  if (churchStateEl) churchStateEl.value = c.state || "";
+
+  // Prefs
   const targetEl = document.getElementById("monthlyTarget");
   const currencyEl = document.getElementById("currency");
-
-  // prefs defaults
   if (targetEl) targetEl.value = Number(u.monthlyTarget || 0);
   if (currencyEl) currencyEl.value = u.currency || "BRL";
 
-  // Se já tem igreja, carrega igreja e preenche campos (modo edição)
-  if (hasChurch) {
-    try {
-      const cSnap = await getDoc(churchRef(u.churchId));
-      const c = cSnap.data() || {};
-
-      if (churchNameEl) churchNameEl.value = c.name || "";
-      if (churchCityEl) churchCityEl.value = c.city || "";
-      if (churchStateEl) churchStateEl.value = c.state || "";
-    } catch (err) {
-      console.error(err);
-      toast(err?.message || "Erro ao carregar dados da igreja.", "error");
-    }
-  }
-
-  // FORM IGREJA: cria ou atualiza dependendo se tem churchId
+  // SALVAR IGREJA
   document.getElementById("formOnboard")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const name = (churchNameEl?.value || "").trim();
     const city = (churchCityEl?.value || "").trim();
     const state = (churchStateEl?.value || "").trim();
@@ -106,29 +95,21 @@ async function boot(user) {
     if (!name) return toast("Informe o nome da igreja.", "error");
 
     try {
-      if (!hasChurch) {
-        // cria igreja
-        await createChurchForUser(user, { name, city, state });
-        toast("Igreja criada! Bem-vindo 👊", "success");
-        go("./dashboard.html");
-      } else {
-        // edita igreja existente
-        await updateDoc(churchRef(u.churchId), {
-          name,
-          city,
-          state,
-          updatedAt: serverTimestamp(),
-          updatedBy: user.uid
-        });
-        toast("Igreja atualizada!", "success");
-      }
+      await updateDoc(churchRef(CHURCH_ID), {
+        name, city, state,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid
+      });
+
+      document.getElementById("churchLabel").textContent = name;
+      toast("Igreja atualizada!", "success");
     } catch (err) {
       console.error(err);
-      toast(err?.message || "Erro ao salvar igreja (Rules?).", "error");
+      toast(err?.message || "Erro ao salvar igreja.", "error");
     }
   });
 
-  // FORM PREFS: salva preferências (sempre)
+  // SALVAR PREFS
   document.getElementById("formPrefs")?.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -141,11 +122,130 @@ async function boot(user) {
         currency,
         updatedAt: serverTimestamp()
       });
+
       toast("Preferências salvas!", "success");
     } catch (err) {
       console.error(err);
       toast(err?.message || "Erro ao salvar preferências.", "error");
     }
+  });
+
+  // ===== Categorias =====
+  const hint = document.getElementById("catRoleHint");
+  if (hint) {
+    hint.textContent = canManageCategories()
+      ? "Você pode criar/editar categorias."
+      : "Somente Admin/Tesoureiro pode criar categorias.";
+  }
+
+  // desabilita forms se não puder
+  const formIncome = document.getElementById("formCatIncome");
+  const formExpense = document.getElementById("formCatExpense");
+  const incomeName = document.getElementById("catIncomeName");
+  const expenseName = document.getElementById("catExpenseName");
+
+  if (!canManageCategories()) {
+    formIncome?.querySelector("button")?.setAttribute("disabled", "disabled");
+    formExpense?.querySelector("button")?.setAttribute("disabled", "disabled");
+    incomeName?.setAttribute("disabled", "disabled");
+    expenseName?.setAttribute("disabled", "disabled");
+  }
+
+  async function addCategory(type, name) {
+    const clean = (name || "").trim();
+    if (!clean) return toast("Digite o nome da categoria.", "error");
+
+    // id previsível para evitar duplicados por nome+tipo
+    const id = (type + "_" + clean.toLowerCase())
+      .replace(/\s+/g, "_")
+      .replace(/[^a-z0-9_]/g, "");
+
+    await setDoc(doc(catsCol(), id), {
+      type,             // "income" | "expense"
+      name: clean,
+      createdAt: serverTimestamp(),
+      createdByUid: user.uid
+    }, { merge: true });
+  }
+
+  formIncome?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!canManageCategories()) return toast("Sem permissão.", "error");
+    try {
+      await addCategory("income", incomeName.value);
+      incomeName.value = "";
+      toast("Categoria de entrada criada!", "success");
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || "Erro ao criar categoria.", "error");
+    }
+  });
+
+  formExpense?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!canManageCategories()) return toast("Sem permissão.", "error");
+    try {
+      await addCategory("expense", expenseName.value);
+      expenseName.value = "";
+      toast("Categoria de saída criada!", "success");
+    } catch (err) {
+      console.error(err);
+      toast(err?.message || "Erro ao criar categoria.", "error");
+    }
+  });
+
+  function renderCats(list) {
+    const incomeWrap = document.getElementById("incomeCats");
+    const expenseWrap = document.getElementById("expenseCats");
+    if (!incomeWrap || !expenseWrap) return;
+
+    const incomes = list.filter(x => x.type === "income").sort((a,b)=>a.name.localeCompare(b.name));
+    const expenses = list.filter(x => x.type === "expense").sort((a,b)=>a.name.localeCompare(b.name));
+
+    const rowTpl = (x) => `
+      <div class="ekkRow" style="grid-template-columns: 1fr .5fr;">
+        <div><b>${escapeHtml(x.name)}</b></div>
+        <div class="right">
+          ${canManageCategories()
+            ? `<button class="btn sm danger btnDelCat" data-id="${x.id}">Excluir</button>`
+            : `<span class="muted">—</span>`
+          }
+        </div>
+      </div>
+    `;
+
+    incomeWrap.innerHTML = incomes.length
+      ? incomes.map(rowTpl).join("")
+      : `<div class="muted" style="padding:12px;">Nenhuma categoria de entrada.</div>`;
+
+    expenseWrap.innerHTML = expenses.length
+      ? expenses.map(rowTpl).join("")
+      : `<div class="muted" style="padding:12px;">Nenhuma categoria de saída.</div>`;
+
+    document.querySelectorAll(".btnDelCat").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        if (!canManageCategories()) return toast("Sem permissão.", "error");
+        const id = btn.dataset.id;
+        if (!confirm("Excluir esta categoria?")) return;
+        try {
+          await deleteDoc(doc(catsCol(), id));
+          toast("Categoria excluída.", "success");
+        } catch (err) {
+          console.error(err);
+          toast(err?.message || "Erro ao excluir.", "error");
+        }
+      });
+    });
+  }
+
+  // realtime categorias
+  if (unsubCats) unsubCats();
+  unsubCats = onSnapshot(query(catsCol(), orderBy("name", "asc")), (snap) => {
+    const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    renderCats(list);
+  }, (err) => {
+    console.error(err);
+    toast(err?.message || "Erro ao carregar categorias.", "error");
   });
 }
 

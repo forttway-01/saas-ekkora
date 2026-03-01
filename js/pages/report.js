@@ -1,225 +1,81 @@
-import { requireAuth } from "../guards.js";
-import { db } from "../firebase.js";
-import { toast } from "../ui.js";
-import { logout } from "../auth.js";
+// ======================================
+// Ekkora • report.js (MVP estável)
+// - Protege rota (logado)
+// - Carrega igreja label
+// - Mostra relatório simples do período (placeholder)
+// ======================================
 
+import { auth } from "../firebase.js";
 import {
-  collection, query, where, orderBy, getDocs, Timestamp
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  userRef, churchRef,
+  getDoc,
+} from "../db.js";
 
-requireAuth();
+import { toast, initThemeToggle } from "../ui.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-const churchId = localStorage.getItem("ekkora:churchId");
-if (!churchId) window.location.href = "/onboarding.html";
-
-document.getElementById("btnGoOnboarding")?.addEventListener("click", () => {
-  window.location.href = "/onboarding.html";
-});
-
-document.getElementById("btnLogout")?.addEventListener("click", async () => {
-  await logout();
-  localStorage.removeItem("ekkora:churchId");
-  window.location.href = "/index.html";
-});
-
-function brl(v){
-  return Number(v||0).toLocaleString("pt-BR", { style:"currency", currency:"BRL" });
-}
-function ymd(date){
-  const d = new Date(date);
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const dd = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${dd}`;
+function go(path){
+  const cur = (window.location.pathname.split("/").pop() || "").toLowerCase();
+  const tgt = path.replace("./","").toLowerCase();
+  if (cur === tgt) return;
+  window.location.replace(path);
 }
 
-function setDefaultDates(){
-  const to = new Date();
-  const from = new Date();
-  from.setDate(from.getDate()-30);
-  document.getElementById("fromDate").value = ymd(from);
-  document.getElementById("toDate").value = ymd(to);
-}
+async function boot(user){
+  initThemeToggle("btnTheme");
 
-function parseDate(id){
-  const v = document.getElementById(id).value;
-  const d = v ? new Date(v + "T00:00:00") : null;
-  return d;
-}
+  document.getElementById("btnLogout")?.addEventListener("click", async () => {
+    await signOut(auth);
+    go("./index.html");
+  });
 
-let lastRows = [];
+  // user doc
+  const uSnap = await getDoc(userRef(user.uid));
+  const u = uSnap.data();
+  if (!u?.churchId) return go("./onboard.html");
 
-async function load(){
-  try{
-    const from = parseDate("fromDate");
-    const to = parseDate("toDate");
-    const type = document.getElementById("typeFilter").value;
-    const cat = (document.getElementById("categoryFilter").value || "").trim().toLowerCase();
+  // church label
+  try {
+    const cSnap = await getDoc(churchRef(u.churchId));
+    const c = cSnap.data();
+    const label = document.getElementById("churchLabel");
+    if (label) label.textContent = c?.name || "Minha igreja";
+  } catch {}
 
-    if(!from || !to){
-      toast("Selecione o período.", "warn");
-      return;
-    }
+  const repFrom = document.getElementById("repFrom");
+  const repTo = document.getElementById("repTo");
+  const out = document.getElementById("reportRows");
 
-    const toEnd = new Date(to);
-    toEnd.setDate(toEnd.getDate()+1);
+  // defaults: mês atual
+  const now = new Date();
+  const from = new Date(now.getFullYear(), now.getMonth(), 1);
+  const to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-    const txRef = collection(db, `churches/${churchId}/transactions`);
-    const qBase = query(
-      txRef,
-      where("date", ">=", Timestamp.fromDate(from)),
-      where("date", "<", Timestamp.fromDate(toEnd)),
-      orderBy("date", "asc")
-    );
+  const toISO = (d) => d.toISOString().slice(0,10);
+  if (repFrom) repFrom.value = toISO(from);
+  if (repTo) repTo.value = toISO(to);
 
-    const snap = await getDocs(qBase);
-    let rows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  document.getElementById("btnRunReport")?.addEventListener("click", () => {
+    const a = repFrom?.value || "";
+    const b = repTo?.value || "";
+    if (!a || !b) return toast("Selecione as datas.", "error");
 
-    if(type !== "all") rows = rows.filter(r => r.type === type);
-    if(cat) rows = rows.filter(r => String(r.category||"").toLowerCase().includes(cat));
-
-    lastRows = rows;
-
-    let sumIn=0, sumOut=0;
-    const byDay = new Map();
-    const byCat = new Map();
-
-    for(const r of rows){
-      const amt = Number(r.amount||0);
-      if(r.type === "in") sumIn += amt;
-      if(r.type === "out") sumOut += amt;
-
-      const d = r.date?.toDate ? r.date.toDate() : null;
-      if(d){
-        const key = ymd(d);
-        if(!byDay.has(key)) byDay.set(key, { in:0, out:0 });
-        const v = byDay.get(key);
-        if(r.type==="in") v.in += amt;
-        if(r.type==="out") v.out += amt;
-      }
-
-      const c = (r.category || "Sem categoria").toString();
-      byCat.set(c, (byCat.get(c)||0) + amt);
-    }
-
-    document.getElementById("rIn").textContent = brl(sumIn);
-    document.getElementById("rOut").textContent = brl(sumOut);
-    document.getElementById("rNet").textContent = brl(sumIn - sumOut);
-    document.getElementById("rCount").textContent = String(rows.length);
-
-    const tbody = document.getElementById("txTable");
-    tbody.innerHTML = rows.map(r => {
-      const d = r.date?.toDate ? r.date.toDate() : new Date();
-      return `
-        <tr class="rowHover">
-          <td>${d.toLocaleDateString("pt-BR")}</td>
-          <td>${r.title || "-"}</td>
-          <td>${r.category || "-"}</td>
-          <td>${r.type === "in" ? "Entrada" : "Saída"}</td>
-          <td>${brl((r.type==="out" ? -1 : 1) * Number(r.amount||0))}</td>
-        </tr>
+    // MVP: só confirma na tela (o relatório completo a gente liga com finance depois)
+    if (out) {
+      out.innerHTML = `
+        <div style="font-weight:800; margin-bottom:6px;">Período selecionado</div>
+        <div class="muted">${a} até ${b}</div>
+        <div style="margin-top:10px;" class="muted">
+          Próximo passo: somar Entradas/Saídas desse período e gerar tabela + export.
+        </div>
       `;
-    }).join("") || `<tr><td colspan="5" class="muted">Sem dados no período.</td></tr>`;
-
-    if(window.Chart){
-      const keys = [...byDay.keys()].sort();
-      let running = 0;
-      const labels = [];
-      const saldo = [];
-      const volume = [];
-
-      for(const k of keys){
-        const v = byDay.get(k);
-        const net = (v.in||0) - (v.out||0);
-        running += net;
-        labels.push(k.slice(5));
-        saldo.push(running);
-        volume.push((v.in||0) + (v.out||0));
-      }
-
-      const ctx1 = document.getElementById("chartSeries");
-      if(ctx1){
-        new Chart(ctx1, {
-          type:"line",
-          data:{ labels, datasets:[
-            { label:"Saldo acumulado", data: saldo, tension:.35 },
-            { label:"Volume", data: volume, tension:.35 }
-          ]},
-          options:{
-            responsive:true,
-            plugins:{ legend:{ display:true } },
-            scales:{ y:{ ticks:{ callback:(v)=> brl(v) } } }
-          }
-        });
-      }
-
-      const topCats = [...byCat.entries()]
-        .map(([k,v]) => [k, Number(v||0)])
-        .sort((a,b)=> Math.abs(b[1]) - Math.abs(a[1]))
-        .slice(0,8);
-
-      const ctx2 = document.getElementById("chartCats");
-      if(ctx2){
-        new Chart(ctx2, {
-          type:"bar",
-          data:{
-            labels: topCats.map(x=>x[0]),
-            datasets:[{ label:"Valor", data: topCats.map(x=>x[1]) }]
-          },
-          options:{
-            responsive:true,
-            plugins:{ legend:{ display:false } },
-            scales:{ y:{ ticks:{ callback:(v)=> brl(v) } } }
-          }
-        });
-      }
     }
 
-  }catch(e){
-    console.error(e);
-    toast("Falha ao carregar relatórios.", "error");
-  }
+    toast("Relatório gerado (MVP).", "success");
+  });
 }
 
-function exportCsv(){
-  if(!lastRows.length){
-    toast("Nada para exportar.", "warn");
-    return;
-  }
-  const header = ["date","title","category","type","amount"];
-  const lines = [header.join(",")];
-
-  for(const r of lastRows){
-    const d = r.date?.toDate ? r.date.toDate() : new Date();
-    const row = [
-      `"${d.toISOString()}"`,
-      `"${String(r.title||"").replaceAll('"','""')}"`,
-      `"${String(r.category||"").replaceAll('"','""')}"`,
-      `"${String(r.type||"")}"`,
-      `"${Number(r.amount||0)}"`
-    ];
-    lines.push(row.join(","));
-  }
-
-  const blob = new Blob([lines.join("\n")], { type:"text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `ekkora-relatorio-${Date.now()}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast("CSV exportado ✅", "success");
-}
-
-document.getElementById("btnApply")?.addEventListener("click", load);
-document.getElementById("btnReset")?.addEventListener("click", () => {
-  document.getElementById("typeFilter").value = "all";
-  document.getElementById("categoryFilter").value = "";
-  setDefaultDates();
-  load();
+onAuthStateChanged(auth, (user) => {
+  if (!user) return go("./index.html");
+  boot(user);
 });
-document.getElementById("btnExportCsv")?.addEventListener("click", exportCsv);
-
-setDefaultDates();
-load();
-

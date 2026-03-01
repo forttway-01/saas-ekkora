@@ -1,0 +1,189 @@
+/* =========================================
+   Ekkora • Layout SaaS (padrão People)
+   Arquivo: /css/layout-saas.css
+   ========================================= */
+
+.ekkApp{display:grid; grid-template-columns: 280px 1fr; min-height:100vh;}
+.ekkSide{border-right:1px solid rgba(255,255,255,.08); padding:16px; background: rgba(255,255,255,.02);}
+.ekkMain{padding:22px; max-width: 1200px; margin:0 auto; width:100%;}
+
+.ekkTop{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:14px;}
+.ekkTop h1{margin:0; font-size:1.25rem;}
+.ekkTop p{margin:6px 0 0; opacity:.7; font-size:.95rem;}
+.ekkActions{display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+
+.ekkBrand{display:flex; gap:10px; align-items:center; margin-bottom:14px;}
+.ekkLogo{
+  width:42px; height:42px; border-radius:12px;
+  background: rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.ekkLogo img{width:100%; height:100%; object-fit:contain; display:block;}
+.ekkBrandTitle{font-weight:800; letter-spacing:.2px; line-height:1;}
+.ekkBrandSub{opacity:.7; font-size:.9rem; margin-top:4px;}
+
+.ekkNav{display:flex; flex-direction:column; gap:6px; margin:14px 0;}
+.ekkNav a{
+  text-decoration:none; color:inherit;
+  padding:10px 10px; border-radius:10px;
+  background: rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.06);
+  opacity:.92;
+}
+.ekkNav a:hover{background: rgba(255,255,255,.04);}
+.ekkNav a.is-active{
+  border-color: rgba(25,195,125,.35);
+  background: rgba(25,195,125,.08);
+}
+
+.ekkSideBottom{display:flex; gap:10px; margin-top:18px; flex-wrap:wrap;}
+
+.ekkCard{
+  border:1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.02);
+  border-radius:16px;
+  overflow:hidden;
+}
+
+.ekkRow{
+  display:grid;
+  padding:12px 12px;
+  align-items:center;
+  border-top:1px solid rgba(255,255,255,.06);
+  gap:10px;
+  font-size:.95rem;
+}
+.ekkHead{
+  border-top:none;
+  background: rgba(255,255,255,.03);
+  font-weight:700;
+}
+
+.right{text-align:right;}
+
+.pill{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.03);
+  opacity:.9;
+  font-size:.85rem;
+}
+
+.input{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  color:inherit;
+  outline:none;
+  min-width: 220px;
+}
+.input.small{min-width:auto; padding:8px 10px; border-radius:10px;}
+
+.btn{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color:inherit;
+  cursor:pointer;
+}
+.btn.primary{border-color: rgba(25,195,125,.35); background: rgba(25,195,125,.12);}
+.btn.ghost{background: rgba(255,255,255,.02);}
+.btn.danger{border-color: rgba(255,77,77,.35); background: rgba(255,77,77,.10);}
+.btn.sm{padding:8px 10px; border-radius:10px; font-size:.9rem;}
+
+.chartWrap{padding:12px;}
+.cardPad{padding:12px;}
+.cardHead{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; padding:12px; border-bottom:1px solid rgba(255,255,255,.06);}
+.cardTitle{font-weight:800;}
+.muted{opacity:.75;}
+
+.grid2{display:grid; grid-template-columns: 1fr 1fr; gap:12px;}
+.grid4{display:grid; grid-template-columns: repeat(4, 1fr); gap:12px;}
+@media (max-width: 980px){ .grid4{grid-template-columns: repeat(2, 1fr);} }
+@media (max-width: 920px){
+  .ekkApp{grid-template-columns: 1fr;}
+  .ekkMain{padding:16px;}
+  .input{min-width: 160px;}
+  .grid2{grid-template-columns: 1fr;}
+}
+/* ===== Modal (People / Cadastro) ===== */
+.modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.60);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.modal.hidden{ display:none; }
+
+.modalCard{
+  width: min(760px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(12,12,12,.96);
+  padding: 14px;
+}
+
+.modalTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:10px;
+}
+
+.iconBtn{
+  border:none;
+  background:transparent;
+  color:inherit;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.formGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field span{
+  display:block;
+  font-size:.85rem;
+  opacity:.8;
+  margin-bottom:6px;
+}
+
+textarea.input{ min-width:auto; }
+
+.modalActions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:6px;
+}
+
+@media (max-width: 920px){
+  .formGrid{ grid-template-columns: 1fr; }
+}
+/* ===== Charts (garante que o canvas tenha área) ===== */
+.chartWrap{
+  position: relative;
+  padding: 12px;
+  min-height: 280px; /* pizza aparece sempre */
+}
+
+.chartWrap canvas{
+  display:block;
+  width: 100% !important;
+  height: 100% !important; /* impede “pizza invisível” */
+}

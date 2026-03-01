@@ -1,154 +1,132 @@
 <!doctype html>
-<html lang="pt-br" data-theme="dark">
+<html lang="pt-br">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ekkora • Finanças</title>
+
+  <link rel="icon" href="./favicon.png" type="image/png">
   <link rel="stylesheet" href="./css/app.css" />
-  <link rel="icon" href="./favicon.png" type="image/x-icon">
+  <link rel="stylesheet" href="./css/layout-saas.css" />
 </head>
+
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand side-brand">
-        <div class="logoMark">E</div>
-        <div class="brandText">
-          <h1>Ekkora</h1>
-          <p id="churchLabel" class="muted">Carregando…</p>
+  <div class="ekkApp">
+    <!-- Sidebar (padrão People) -->
+    <aside class="ekkSide">
+      <div class="ekkBrand">
+        <div class="ekkLogo">
+          <img src="./logo.png" alt="Ekkora">
+        </div>
+        <div>
+          <div class="ekkBrandTitle">Ekkora</div>
+          <div id="churchLabel" class="ekkBrandSub">Carregando…</div>
         </div>
       </div>
 
-     <nav class="nav">
-  <a class="nav-item" href="./dashboard.html">Dashboard</a>
-  <a class="nav-item" href="./finance.html">Finanças</a>
-  <a class="nav-item" href="./members.html">Membros</a>
-  <a class="nav-item" href="./report.html">Relatórios</a>
-  <a class="nav-item" href="./onboard.html">Onboarding</a>
-</nav>
+      <nav class="ekkNav">
+        <a href="./dashboard.html">Dashboard</a>
+        <a class="is-active" href="./finance.html">Finanças</a>
+        <a href="./members.html">Equipe (Usuários)</a>
+        <a href="./people.html">Membros (Cadastro)</a>
+        <a href="./report.html">Relatórios</a>
+        <a href="./onboard.html">Configurações</a>
+      </nav>
 
-      <div class="side-bottom">
-        <button id="btnTheme" class="btn btn-ghost">🌗 Alternar tema</button>
-        <button id="btnLogout" class="btn btn-danger">Sair</button>
+      <div class="ekkSideBottom">
+        <button id="btnTheme" class="btn ghost" type="button">🌗 Alternar tema</button>
+        <button id="btnLogout" class="btn danger" type="button">Sair</button>
       </div>
     </aside>
 
-    <main class="content">
-      <header class="topbar">
+    <!-- Main -->
+    <main class="ekkMain">
+      <header class="ekkTop">
         <div>
-          <h2>Finanças</h2>
-          <p class="muted">Entradas e saídas em tempo real</p>
+          <h1>Finanças</h1>
+          <p>Lançamentos em tempo real • entradas e saídas</p>
         </div>
-        <div class="top-actions">
-          <a class="btn btn-ghost" href="./dashboard.html">← Voltar</a>
+
+        <div class="ekkActions">
+          <input id="searchFinance" class="input" placeholder="Buscar por categoria, descrição…" />
         </div>
       </header>
 
-      <section class="grid finance-grid">
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <div class="card-title">Nova movimentação</div>
-              <div class="muted">Salva no Firestore</div>
-            </div>
+      <!-- Form -->
+      <section class="ekkCard" style="margin-bottom:12px;">
+        <div class="cardHead">
+          <div>
+            <div class="cardTitle">Nova movimentação</div>
+            <div class="muted">Agora a categoria vem das Configurações</div>
           </div>
 
-          <form id="formFinance" class="form is-visible">
-            <label class="field">
-              <span>Tipo</span>
-              <select id="type" class="input" required>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <a class="btn ghost" href="./onboard.html">Gerenciar categorias</a>
+          </div>
+        </div>
+
+        <div class="cardPad">
+          <form id="formFinance" class="grid2">
+            <label>
+              <div class="muted" style="margin-bottom:6px;">Tipo</div>
+              <select id="fType" class="input">
                 <option value="income">Entrada</option>
                 <option value="expense">Saída</option>
               </select>
             </label>
 
-            <label class="field">
-              <span>Valor</span>
-              <input id="amount" class="input" type="number" min="0" step="0.01" placeholder="Ex: 120.50" required />
+            <label>
+              <div class="muted" style="margin-bottom:6px;">Valor</div>
+              <input id="fAmount" class="input" type="number" min="0" step="0.01" placeholder="Ex: 150.00" required />
             </label>
 
-            <label class="field">
-              <span>Categoria</span>
-              <input id="category" class="input" type="text" placeholder="Ex: Dízimos / Oferta / Luz / Água" required />
+            <label>
+              <div class="muted" style="margin-bottom:6px;">Categoria</div>
+              <!-- ✅ virou SELECT -->
+              <select id="fCategory" class="input" required>
+                <option value="">Carregando categorias…</option>
+              </select>
+              <div class="muted" id="catHint" style="margin-top:6px; font-size:.9rem;"></div>
             </label>
 
-            <label class="field">
-              <span>Data</span>
-              <input id="date" class="input" type="date" required />
+            <label>
+              <div class="muted" style="margin-bottom:6px;">Data</div>
+              <input id="fDate" class="input" type="date" required />
             </label>
 
-            <label class="field">
-              <span>Descrição</span>
-              <input id="note" class="input" type="text" placeholder="Ex: Oferta do culto domingo" />
+            <label style="grid-column:1/-1;">
+              <div class="muted" style="margin-bottom:6px;">Descrição</div>
+              <input id="fNote" class="input" placeholder="Ex: oferta culto domingo…" />
             </label>
 
-            <button class="btn btn-primary" type="submit">Salvar</button>
-            <p class="hint">Dica: use categorias consistentes para o gráfico ficar bonito.</p>
+            <div style="grid-column:1/-1; display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+              <button type="reset" class="btn ghost">Limpar</button>
+              <button id="btnSaveFinance" type="submit" class="btn primary">Salvar</button>
+            </div>
           </form>
-        </div>
-
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <div class="card-title">Lançamentos do mês</div>
-              <div class="muted">Clique para editar ou excluir</div>
-            </div>
-          </div>
-
-          <div class="table">
-            <div class="row head" style="grid-template-columns: 120px 110px 150px 1fr 140px 140px;">
-              <div>Data</div><div>Tipo</div><div>Categoria</div><div>Descrição</div><div class="right">Valor</div><div class="right">Ações</div>
-            </div>
-            <div id="rows"></div>
-          </div>
         </div>
       </section>
 
-      <!-- MODAL EDIT -->
-      <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
-        <div class="modal-card">
-          <div class="modal-head">
-            <div class="modal-title">Editar lançamento</div>
-            <button id="closeModal" class="icon-btn" aria-label="Fechar">✕</button>
+      <!-- Table -->
+      <section class="ekkCard">
+        <div class="cardHead">
+          <div>
+            <div class="cardTitle">Lançamentos</div>
+            <div class="muted">Atualiza sozinho</div>
           </div>
-
-          <form id="formEdit" class="form is-visible">
-            <input id="editId" type="hidden" />
-
-            <label class="field">
-              <span>Tipo</span>
-              <select id="editType" class="input" required>
-                <option value="income">Entrada</option>
-                <option value="expense">Saída</option>
-              </select>
-            </label>
-
-            <label class="field">
-              <span>Valor</span>
-              <input id="editAmount" class="input" type="number" min="0" step="0.01" required />
-            </label>
-
-            <label class="field">
-              <span>Categoria</span>
-              <input id="editCategory" class="input" type="text" required />
-            </label>
-
-            <label class="field">
-              <span>Data</span>
-              <input id="editDate" class="input" type="date" required />
-            </label>
-
-            <label class="field">
-              <span>Descrição</span>
-              <input id="editNote" class="input" type="text" />
-            </label>
-
-            <div class="modal-actions">
-              <button class="btn btn-primary" type="submit">Salvar alterações</button>
-              <button id="btnDelete" class="btn btn-danger" type="button">Excluir</button>
-            </div>
-          </form>
         </div>
-      </div>
+
+        <div class="ekkRow ekkHead" style="grid-template-columns: .8fr .8fr 1fr 1.4fr .8fr .7fr;">
+          <div>Data</div>
+          <div>Tipo</div>
+          <div>Categoria</div>
+          <div>Descrição</div>
+          <div class="right">Valor</div>
+          <div class="right">Ações</div>
+        </div>
+
+        <div id="financeRows"></div>
+      </section>
 
       <div id="toast" class="toast" aria-live="polite"></div>
     </main>
